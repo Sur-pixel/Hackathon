@@ -1,9 +1,10 @@
 const express = require('express')
 const { v4: uuidv4} = require('uuid');
-const sendMail = require('./email')
-const nodemailer = require('nodemailer')
+const sendMail = require('./email');
 
-console.log(uuidv4())
+const nodemailer = require('nodemailer')
+const fs = require('fs');
+
 const app = express();
 const mongoose  = require('mongoose')
 let MONGO_URI = 'mongodb+srv://hackathon:idk@cluster0.cfrst.mongodb.net/myFirstDatabase?retryWrites=true&w=majority'
@@ -28,15 +29,17 @@ app.get("*", async(req, res) =>{
 
     let url = req.url;
     url = url.substr(1)
-    console.log(url)
 verfication.find({verfication_code: url}, (err, result) =>{
 db.collection('credentials').updateOne({verified: url}, {$set: {verified: true}}, (err2, result2) =>{
 db.collection('verifications').deleteOne({verfication_code: url}, (err3, result3) =>{
 
-    console.log(result3)
+    
 })
 })
 })
+
+
+
 
 res.setHeader(
     'Content-type', 'text/html'
@@ -243,27 +246,75 @@ res.send(`<!DOCTYPE html>
 
 </html>`)
 })
+
+
+
+
+
 app.get('/', (req, res) =>{
 
-    res.send('Hi')
+    res.sendFile(__dirname + "/public/sign-up.html")
 })
+
+
+
 
 app.post('/sign-up', (req, res) =>{
     let id = uuidv4()
-db.collection('verifications').insertOne({
 
-    email : req.body.email, 
-    verfication_code: id
+    //this code is for email exists check 
+    // db.collection('credentials').find({email : req.body.email}, (err, result) =>{
+
+
+    //     if(typeof(result) == Object){
+
+    //         db.collection('verifications').insertOne({
+
+    //             email : req.body.email, 
+    //             verfication_code: id
+    //         })
+        
+        
+    //         sendMail.sendMail(req, id)
+    //         db.collection('credentials').insertOne({
+        
+        
+    //             email: req.body.email, 
+    //             password: req.body.psw, 
+    //             verified: id
+    //         })
+    //     }else{
+
+    //         console.log('email exists')
+    //     }
+    // })
+    db.collection('verifications').insertOne({
+
+        email : req.body.email, 
+        verfication_code: id
+    })
+
+
+    sendMail.sendMail(req, id)
+    db.collection('credentials').insertOne({
+
+
+        email: req.body.email, 
+        password: req.body.psw, 
+        verified: id,
+        logged: false,
+    })
+   
+
 })
 
-
-sendMail.sendMail(req, id)
-db.collection('credentials').insertOne({
-
-
-    email: req.body.email, 
-    password: req.body.psw, 
-    verified: id
-})
-//Hi
+app.post('/login', (req, res) => {
+    var email = req.body.email;
+    var password = req.body.password;
+    credentials.find({email: email}, (err, result) => {
+        if (err){
+            console.log(err);
+        }
+        console.log(result)
+    })
 })
